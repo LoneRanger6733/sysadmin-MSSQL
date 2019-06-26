@@ -1,0 +1,47 @@
+CHECK TABLE LOCK 
+------------------------------------------------------
+
+select cmd,* from sys.sysprocesses where blocked > 0;
+
+------------------------------------------------------
+
+Detail - Check Table Lock 
+
+------------------------------------------------------
+
+SELECT blocking_session_id AS BlockingSessionID,
+
+session_id AS VictimSessionID,
+
+(SELECT [text] FROM sys.sysprocesses
+
+CROSS APPLY sys.dm_exec_sql_text([sql_handle])
+
+WHERE spid = blocking_session_id) AS BlockingQuery,
+
+[text] AS VictimQuery,
+
+wait_time/1000 AS WaitDurationSecond,
+
+wait_type AS WaitType,
+
+percent_complete AS BlockingQueryCompletePercent
+
+FROM sys.dm_exec_requests
+
+CROSS APPLY sys.dm_exec_sql_text([sql_handle])
+
+WHERE blocking_session_id > 0
+
+------------------------------------------------------
+
+CHECK QUERY 
+
+------------------------------------------------------
+
+SELECT c.session_id, c.properties, c.creation_time, c.is_open, t.text
+
+FROM sys.dm_exec_cursors ("SSID") c
+
+CROSS APPLY sys.dm_exec_sql_text (c.sql_handle) t 
+
